@@ -2,6 +2,9 @@
 
 Ein fortgeschrittener Pokémon Team Generator mit umfangreichen Filtermöglichkeiten, entwickelt in Python mit Tkinter.
 
+![image](https://github.com/user-attachments/assets/d38e5742-b51f-48a1-8d66-8a55fed29a4b)
+
+
 ## Features
 
 ### 1. Pokémon Auswahl
