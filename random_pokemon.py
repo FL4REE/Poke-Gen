@@ -26,6 +26,21 @@ species_cache: Dict[int, Dict] = {}
 evolution_cache: Dict[int, List[int]] = {}
 sprite_cache: Dict[str, ImageTk.PhotoImage] = {}
 
+class DraculaTheme:
+    """Dracula color theme constants"""
+    BACKGROUND = "#282a36"
+    CURRENT_LINE = "#44475a"
+    SELECTION = "#44475a"
+    FOREGROUND = "#f8f8f2"
+    COMMENT = "#6272a4"
+    CYAN = "#8be9fd"
+    GREEN = "#50fa7b"
+    ORANGE = "#ffb86c"
+    PINK = "#ff79c6"
+    PURPLE = "#bd93f9"
+    RED = "#ff5555"
+    YELLOW = "#f1fa8c"
+
 def load_cache():
     """Load cached data from files."""
     global pokemon_cache, species_cache
@@ -106,16 +121,20 @@ def prefetch_species_data(pokemon_ids: List[int]):
 
 class GenerationSelector(tk.Frame):
     def __init__(self, master):
-        super().__init__(master)
+        super().__init__(master, bg=DraculaTheme.BACKGROUND)
         self.checkboxes = []
         self.vars = []
         
-        # Create label
-        label = tk.Label(self, text="Wähle die Generationen:", font=('Arial', 10))
-        label.pack(anchor='w')
+        # Create title
+        title = tk.Label(self,
+                        text="Generationen-Auswahl",
+                        font=('Arial', 14, 'bold'),
+                        bg=DraculaTheme.BACKGROUND,
+                        fg=DraculaTheme.ORANGE)
+        title.pack(anchor='w', pady=(0, 10))
         
         # Create checkbox container
-        checkbox_container = tk.Frame(self)
+        checkbox_container = tk.Frame(self, bg=DraculaTheme.BACKGROUND)
         checkbox_container.pack(fill=tk.X)
         
         # Create checkboxes for each generation
@@ -125,7 +144,12 @@ class GenerationSelector(tk.Frame):
             cb = tk.Checkbutton(checkbox_container, 
                               text=f"Gen {i+1}", 
                               variable=var,
-                              font=('Arial', 10))
+                              font=('Arial', 10),
+                              bg=DraculaTheme.BACKGROUND,
+                              fg=DraculaTheme.FOREGROUND,
+                              selectcolor=DraculaTheme.CURRENT_LINE,
+                              activebackground=DraculaTheme.BACKGROUND,
+                              activeforeground=DraculaTheme.YELLOW)
             cb.pack(side=tk.LEFT, padx=5)
             self.checkboxes.append(cb)
     
@@ -287,11 +311,12 @@ class LoadingIndicator(tk.Canvas):
         self.angle = 0
         self.is_running = False
         
-        # Pokeball colors
-        self.red = "#EE1515"
-        self.white = "#FFFFFF"
-        self.black = "#222224"
+        # Pokeball colors with Dracula theme
+        self.red = DraculaTheme.RED
+        self.white = DraculaTheme.FOREGROUND
+        self.black = DraculaTheme.BACKGROUND
         
+        self.configure(bg=DraculaTheme.BACKGROUND)
         self.draw_pokeball()
     
     def draw_pokeball(self):
@@ -340,14 +365,18 @@ class LoadingIndicator(tk.Canvas):
 
 class LoadingFrame(tk.Frame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, **kwargs)
+        super().__init__(master, bg=DraculaTheme.BACKGROUND, **kwargs)
         
         # Create and pack loading indicator
         self.indicator = LoadingIndicator(self)
         self.indicator.pack(side=tk.LEFT, padx=5)
         
         # Create and pack loading text
-        self.text = tk.Label(self, text="Lade Pokemon...", font=('Arial', 12))
+        self.text = tk.Label(self,
+                           text="Lade Pokemon...",
+                           font=('Arial', 12),
+                           bg=DraculaTheme.BACKGROUND,
+                           fg=DraculaTheme.CYAN)
         self.text.pack(side=tk.LEFT, padx=5)
     
     def start(self):
@@ -451,7 +480,7 @@ def show_pokemon():
             
             # Create frame for each row (3 Pokemon per row)
             for row in range(2):
-                row_frame = tk.Frame(pokemon_frame)
+                row_frame = tk.Frame(pokemon_frame, bg=DraculaTheme.BACKGROUND)
                 row_frame.pack(pady=10)
                 
                 for col in range(3):
@@ -462,7 +491,11 @@ def show_pokemon():
                     pokemon_data = selected_pokemon[idx]
                     
                     # Create frame for this Pokemon
-                    pokemon_display = tk.Frame(row_frame)
+                    pokemon_display = tk.Frame(row_frame, 
+                                            bg=DraculaTheme.CURRENT_LINE,
+                                            padx=10, pady=10,
+                                            relief=tk.RAISED,
+                                            borderwidth=1)
                     pokemon_display.pack(side=tk.LEFT, padx=10)
                     
                     # Determine if Pokemon should be shiny (10% chance)
@@ -475,7 +508,9 @@ def show_pokemon():
                     # Load sprite
                     photo = load_sprite(sprite_url)
                     if photo:
-                        image_label = tk.Label(pokemon_display, image=photo)
+                        image_label = tk.Label(pokemon_display,
+                                             image=photo,
+                                             bg=DraculaTheme.CURRENT_LINE)
                         image_label.image = photo
                         image_label.pack()
                     
@@ -487,22 +522,55 @@ def show_pokemon():
                                         pokemon_data['name'].capitalize())
                         
                         # Create text with Pokemon info
-                        info_text = f"{german_name} {'✨' if is_shiny else ''}\n"
-                        info_text += f"#{pokemon_data['id']}\n"
-                        info_text += f"Typ: {' / '.join(t['type']['name'].capitalize() for t in pokemon_data['types'])}\n"
-                        info_text += f"Größe: {pokemon_data['height']/10:.1f}m\n"
-                        info_text += f"Gewicht: {pokemon_data['weight']/10:.1f}kg"
+                        name_text = f"{german_name} {'✨' if is_shiny else ''}"
+                        number_text = f"#{pokemon_data['id']}"
+                        type_text = f"Typ: {' / '.join(t['type']['name'].capitalize() for t in pokemon_data['types'])}"
+                        size_text = f"Größe: {pokemon_data['height']/10:.1f}m"
+                        weight_text = f"Gewicht: {pokemon_data['weight']/10:.1f}kg"
                         
-                        # Create and pack info label
-                        info_label = tk.Label(pokemon_display, text=info_text, 
-                                            font=('Arial', 10), justify=tk.LEFT)
-                        info_label.pack()
+                        # Create and pack info labels with different colors
+                        name_label = tk.Label(pokemon_display,
+                                           text=name_text,
+                                           font=('Arial', 12, 'bold'),
+                                           bg=DraculaTheme.CURRENT_LINE,
+                                           fg=DraculaTheme.GREEN if is_shiny else DraculaTheme.PINK)
+                        name_label.pack()
+                        
+                        number_label = tk.Label(pokemon_display,
+                                             text=number_text,
+                                             font=('Arial', 10),
+                                             bg=DraculaTheme.CURRENT_LINE,
+                                             fg=DraculaTheme.COMMENT)
+                        number_label.pack()
+                        
+                        type_label = tk.Label(pokemon_display,
+                                           text=type_text,
+                                           font=('Arial', 10),
+                                           bg=DraculaTheme.CURRENT_LINE,
+                                           fg=DraculaTheme.ORANGE)
+                        type_label.pack()
+                        
+                        size_label = tk.Label(pokemon_display,
+                                           text=size_text,
+                                           font=('Arial', 10),
+                                           bg=DraculaTheme.CURRENT_LINE,
+                                           fg=DraculaTheme.CYAN)
+                        size_label.pack()
+                        
+                        weight_label = tk.Label(pokemon_display,
+                                             text=weight_text,
+                                             font=('Arial', 10),
+                                             bg=DraculaTheme.CURRENT_LINE,
+                                             fg=DraculaTheme.CYAN)
+                        weight_label.pack()
                         
                     except Exception as e:
                         print(f"Error displaying Pokemon: {e}")
                         error_label = tk.Label(pokemon_display, 
                                              text=f"Error displaying\n{pokemon_data['name']}", 
-                                             font=('Arial', 10))
+                                             font=('Arial', 10),
+                                             bg=DraculaTheme.CURRENT_LINE,
+                                             fg=DraculaTheme.RED)
                         error_label.pack()
             
             # Stop and remove loading indicator
@@ -526,13 +594,27 @@ def main():
     load_cache()
     
     window = tk.Tk()
-    window.title("Pokémon Generator")
+    window.title("Pokémon Team Generator")
+    
+    # Configure Dracula theme styles
+    style = ttk.Style()
+    style.configure("Dracula.TCheckbutton",
+                   background=DraculaTheme.BACKGROUND,
+                   foreground=DraculaTheme.FOREGROUND)
+    style.configure("Dracula.TCombobox",
+                   background=DraculaTheme.BACKGROUND,
+                   foreground=DraculaTheme.FOREGROUND,
+                   fieldbackground=DraculaTheme.CURRENT_LINE,
+                   selectbackground=DraculaTheme.SELECTION)
     
     # Set window size and position
     window_width = 1000
     window_height = 1350
     window.geometry(f"{window_width}x{window_height}")
     window.minsize(800, 700)
+    
+    # Configure window colors
+    window.configure(bg=DraculaTheme.BACKGROUND)
     
     # Center window
     screen_width = window.winfo_screenwidth()
@@ -542,23 +624,44 @@ def main():
     window.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 
     # Create main container
-    main_container = tk.Frame(window, padx=20, pady=20)
+    main_container = tk.Frame(window, padx=20, pady=20, bg=DraculaTheme.BACKGROUND)
     main_container.pack(fill=tk.BOTH, expand=True)
+    
+    # Create title
+    title_label = tk.Label(main_container, 
+                          text="Pokémon Team Generator",
+                          font=('Arial', 24, 'bold'),
+                          bg=DraculaTheme.BACKGROUND,
+                          fg=DraculaTheme.PURPLE)
+    title_label.pack(pady=(0, 20))
     
     # Create generation selector
     generation_selector = GenerationSelector(main_container)
     generation_selector.pack(fill=tk.X, pady=(0, 20))
     
     # Create filter frame
-    filter_frame = tk.Frame(main_container)
+    filter_frame = tk.Frame(main_container, bg=DraculaTheme.BACKGROUND)
     filter_frame.pack(fill=tk.X, pady=(0, 20))
+    
+    # Create filter section title
+    filter_title = tk.Label(filter_frame,
+                           text="Filter Optionen",
+                           font=('Arial', 14, 'bold'),
+                           bg=DraculaTheme.BACKGROUND,
+                           fg=DraculaTheme.CYAN)
+    filter_title.pack(anchor='w', pady=(0, 10))
     
     # Create type filter checkbox
     type_filter_var = tk.BooleanVar(value=False)
     type_filter = tk.Checkbutton(filter_frame, 
                                 text="Typ-Filter: Jeder Typ soll nur einmal vorkommen", 
                                 variable=type_filter_var,
-                                font=('Arial', 10))
+                                font=('Arial', 10),
+                                bg=DraculaTheme.BACKGROUND,
+                                fg=DraculaTheme.FOREGROUND,
+                                selectcolor=DraculaTheme.CURRENT_LINE,
+                                activebackground=DraculaTheme.BACKGROUND,
+                                activeforeground=DraculaTheme.GREEN)
     type_filter.pack(anchor='w')
     
     # Create evolution filter checkbox
@@ -566,7 +669,12 @@ def main():
     evolution_filter = tk.Checkbutton(filter_frame, 
                                     text="Entwicklungs-Filter: Nur voll entwickelte Pokemon oder Pokemon ohne Entwicklung", 
                                     variable=evolution_filter_var,
-                                    font=('Arial', 10))
+                                    font=('Arial', 10),
+                                    bg=DraculaTheme.BACKGROUND,
+                                    fg=DraculaTheme.FOREGROUND,
+                                    selectcolor=DraculaTheme.CURRENT_LINE,
+                                    activebackground=DraculaTheme.BACKGROUND,
+                                    activeforeground=DraculaTheme.GREEN)
     evolution_filter.pack(anchor='w')
 
     # Create legendary filter checkbox
@@ -574,19 +682,35 @@ def main():
     legendary_filter = tk.Checkbutton(filter_frame,
                                     text="Legendär-Filter: Keine legendären oder mystischen Pokemon",
                                     variable=legendary_filter_var,
-                                    font=('Arial', 10))
+                                    font=('Arial', 10),
+                                    bg=DraculaTheme.BACKGROUND,
+                                    fg=DraculaTheme.FOREGROUND,
+                                    selectcolor=DraculaTheme.CURRENT_LINE,
+                                    activebackground=DraculaTheme.BACKGROUND,
+                                    activeforeground=DraculaTheme.GREEN)
     legendary_filter.pack(anchor='w')
 
     # Create selector container
-    selector_container = tk.Frame(main_container)
+    selector_container = tk.Frame(main_container, bg=DraculaTheme.BACKGROUND)
     selector_container.pack(fill=tk.X, pady=(0, 20))
     
     # Add label above selectors
-    label = tk.Label(selector_container, text="Wähle deine Pokemon (leere Plätze werden zufällig aufgefüllt):", font=('Arial', 10))
-    label.pack(pady=(0, 10))
+    selector_title = tk.Label(selector_container,
+                            text="Manuelle Pokémon-Auswahl",
+                            font=('Arial', 14, 'bold'),
+                            bg=DraculaTheme.BACKGROUND,
+                            fg=DraculaTheme.PINK)
+    selector_title.pack(pady=(0, 10))
+    
+    selector_subtitle = tk.Label(selector_container, 
+                               text="Wähle deine Pokemon (leere Plätze werden zufällig aufgefüllt):", 
+                               font=('Arial', 10),
+                               bg=DraculaTheme.BACKGROUND,
+                               fg=DraculaTheme.FOREGROUND)
+    selector_subtitle.pack(pady=(0, 10))
     
     # Create container for selectors
-    dropdown_container = tk.Frame(selector_container)
+    dropdown_container = tk.Frame(selector_container, bg=DraculaTheme.BACKGROUND)
     dropdown_container.pack()
     
     # Get Pokemon list for dropdowns
@@ -601,13 +725,20 @@ def main():
 
     # Create frame for Pokemon display
     global pokemon_frame
-    pokemon_frame = tk.Frame(main_container)
+    pokemon_frame = tk.Frame(main_container, bg=DraculaTheme.BACKGROUND)
     pokemon_frame.pack(fill=tk.BOTH, expand=True)
 
     # Create generate button
-    generate_button = tk.Button(main_container, text="Generiere Pokémon Team", 
-                              command=show_pokemon, padx=20, pady=10, 
-                              font=('Arial', 12))
+    generate_button = tk.Button(main_container, 
+                              text="Generiere Pokémon Team", 
+                              command=show_pokemon,
+                              padx=20, pady=10,
+                              font=('Arial', 12, 'bold'),
+                              bg=DraculaTheme.PURPLE,
+                              fg=DraculaTheme.FOREGROUND,
+                              activebackground=DraculaTheme.SELECTION,
+                              activeforeground=DraculaTheme.FOREGROUND,
+                              relief=tk.FLAT)
     generate_button.pack(pady=(0, 20))
 
     window.mainloop()
